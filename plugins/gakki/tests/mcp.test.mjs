@@ -112,3 +112,33 @@ test(
     assert.ok(result.setupCommand.includes(copy));
   },
 );
+
+test("debug client persists real image previews without overwriting prior evidence", async (t) => {
+  const { promisify } = await import("node:util");
+  const { execFile } = await import("node:child_process");
+  const run = promisify(execFile);
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "gakki-preview-"));
+  t.after(() => fs.rm(dir, { recursive: true, force: true }));
+  const source = path.join(dir, "source.png");
+  await sharp({
+    create: { width: 20, height: 30, channels: 4, background: "#8c80bb" },
+  })
+    .png()
+    .toFile(source);
+  const input = path.join(dir, "input.json");
+  await fs.writeFile(input, JSON.stringify({ imagePath: source }));
+  const args = [
+    path.join(root, "scripts/mcp-call.mjs"),
+    "inspect_design",
+    input,
+    path.join(root, "dist/mcp.mjs"),
+    path.join(dir, "previews"),
+  ];
+  const result = JSON.parse((await run(process.execPath, args)).stdout);
+  assert.equal(result.imageCount, 1);
+  assert.equal(result.previews.length, 1);
+  const before = await fs.readFile(result.previews[0]);
+  assert.equal((await sharp(before).metadata()).width, 20);
+  await assert.rejects(run(process.execPath, args));
+  assert.deepEqual(await fs.readFile(result.previews[0]), before);
+});

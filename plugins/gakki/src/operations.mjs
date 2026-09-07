@@ -210,6 +210,15 @@ export const operations = {
     z
       .object({
         ...sources,
+        context: z
+          .object({
+            scenario: z.string().min(1).max(200).optional(),
+            route: z.string().min(1).max(500).optional(),
+            dataMode: z.enum(["local", "fixture", "unknown"]).optional(),
+            buildEvidence: z.string().min(1).max(2000).optional(),
+          })
+          .strict()
+          .optional(),
         devices: z
           .array(z.string().uuid())
           .min(1)

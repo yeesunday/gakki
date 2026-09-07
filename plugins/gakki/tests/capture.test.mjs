@@ -138,3 +138,23 @@ test("unsafe source selection and duplicate viewport IDs are rejected", async (t
     /local development/,
   );
 });
+
+test("iOS settings distinguish observation from unavailable platform data", async () => {
+  const { readIosSettings } = await import("../src/capture.mjs");
+  const measured = await readIosSettings("simulator", async (_, args) => ({
+    stdout: args.at(-1) === "appearance" ? "light\n" : "large\n",
+  }));
+  assert.deepEqual(measured.appearance, { status: "measured", value: "light" });
+  assert.deepEqual(measured.content_size, {
+    status: "measured",
+    value: "large",
+  });
+  const unavailable = await readIosSettings("simulator", async (_, args) => {
+    if (args.at(-1) === "appearance") throw new Error("simulator unavailable");
+    return { stdout: "unsupported\n" };
+  });
+  assert.deepEqual(unavailable, {
+    appearance: { status: "unavailable" },
+    content_size: { status: "unavailable" },
+  });
+});

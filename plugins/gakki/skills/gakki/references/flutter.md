@@ -18,3 +18,7 @@ Build/launch using the project's existing Flutter/Xcode tools and explicit debug
 ```
 
 Use actual UUIDs returned by `xcrun simctl list devices`. For a visual-only change, run its relevant Widget/geometry checks and render. Navigation, media ownership, shared state or database changes need the corresponding behavioral regressions. Golden files freeze an accepted state under a fixed renderer/font environment; generating one does not approve the design.
+
+For repeatable captures, `capture_ios` accepts optional `context` with `scenario`, `route`, `dataMode` (`local`, `fixture`, or `unknown`) and `buildEvidence`. These are caller declarations, not proof of the visible app or installed binary. The report separately records queried simulator UI settings; unavailable settings stay explicit. Use the project's supported settings and requested scope, not an automatic extreme-text test matrix. Compare empty and populated media states as distinct compositions.
+
+When direct MCP tools are unavailable, the development helper accepts an optional fourth argument: `node scripts/mcp-call.mjs <operation> <input.json> <dist/mcp.mjs> <new-preview-directory>`. It saves returned image blocks and lists their paths. Open these images before drawing visual conclusions.

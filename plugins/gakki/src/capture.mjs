@@ -290,6 +290,27 @@ export async function captureWeb(args) {
   return { report: path.join(output, "capture.json"), ...result };
 }
 
+export async function readIosSettings(deviceId, run = execFileAsync) {
+  const settings = {};
+  for (const option of ["appearance", "content_size"]) {
+    try {
+      const { stdout } = await run(
+        "xcrun",
+        ["simctl", "ui", deviceId, option],
+        { timeout: 5000 },
+      );
+      const value = stdout.trim();
+      settings[option] =
+        value && !["unknown", "unsupported"].includes(value)
+          ? { status: "measured", value }
+          : { status: "unavailable" };
+    } catch {
+      settings[option] = { status: "unavailable" };
+    }
+  }
+  return settings;
+}
+
 export async function captureIos(args) {
   if (process.platform !== "darwin")
     throw new Error("iOS simulator capture requires macOS and Xcode");
@@ -326,6 +347,7 @@ export async function captureIos(args) {
       id: device.udid,
       name: device.name,
       runtime: device.runtime,
+      settings: await readIosSettings(device.udid),
       screenshot,
       image: image.source,
     });
@@ -334,6 +356,8 @@ export async function captureIos(args) {
   const result = {
     schema: "gakki.capture/2",
     platform: "ios",
+    context: args.context ? { status: "declared", ...args.context } : null,
+    binaryProvenance: "not_verified",
     execution: "completed",
     elapsedMs: Math.round(performance.now() - start),
     sources: before,

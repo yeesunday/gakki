@@ -15,6 +15,14 @@ Optimize the time to a useful, maintainable page. Codex supplies design judgment
 
 Read project `AGENTS.md` and the relevant component/token source. Use an existing `gakki.toml` as a context index, not an obligatory onboarding step. Separate observed design pixels from inferred responsive rules. A screenshot cannot reveal an API contract, hidden states or a component's runtime behavior.
 
+## Reuse components and complete the design
+
+Inspect the closest existing pages as well as the component library before drawing common controls. Reuse suitable navigation, buttons, fields, media treatments and spacing tokens. A screenshot-specific control is not a reason to duplicate an established component.
+
+If a missing pattern could become a new shared component, describe the proposed API, likely consumers and migration scope to the developer and wait for an explicit affirmative answer before extracting it. Continue the authorized page work with a local implementation while that decision is pending. Reusing an existing component or refining a page-local layout does not require this extra decision.
+
+A supplied design usually shows one state. Complete required empty, loading, error, optional-content and ordinary-photo states with the same hierarchy, proportions, spacing, surfaces and interaction language. Do not invent business features from decorative examples. Distinguish opaque photos from transparent subjects: choose a deliberate frame, crop or contained presentation instead of leaving a tiny rectangular photo at the bottom of a decorative shell. Preserve the original media and access to its full content.
+
 ## See the result while implementing
 
 Use `inspect_design` for source dimensions and focused crops when precision matters. Classify changing text/photos/counts as native data; decorative frames and material detail may be independent static skins. Preserve content and interaction semantics across viewport changes.
@@ -28,5 +36,7 @@ Use `capture_web` or `capture_ios` on the actual project. Inspect the returned i
 Select verification by the change: layout needs affected viewport/content checks; state or navigation needs a real interaction test; shared contracts need their impacted regression. Follow stronger project requirements when applicable. After a full review, recheck the fix and direct interactions instead of reopening unrelated architecture on every iteration.
 
 The tools record their own measurements, timing and selected source files. Choose those files when a capture will support delivery; `verify_capture` detects later changes within that scope. A tiny correction does not need a hand-written IR or five manually signed checks. Save a reusable case only when it will actually be rerun.
+
+Before delivery, inspect the whole rendered page in the states users will actually encounter. Fix obvious imbalance, awkward media placement, mismatched controls, crowded labels and unfinished placeholders within the authorized scope. Passing tests or recording a poor-looking screen is not completion. Judge the composition against the supplied design and neighboring pages; explain necessary responsive or state differences. Respect the user's supported settings and requested test scope instead of expanding an unrelated setting matrix.
 
 Report the page change, useful visual evidence, tests actually run and material unfinished items. Keep functional results, rendered constraints, design judgment and user acceptance distinct. Record end-to-end time and repair rounds for comparable real tasks before claiming a speedup.
