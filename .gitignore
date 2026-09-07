@@ -1,0 +1,37 @@
+# Local archives, research, logs and release packages
+/achieve/
+.gakki/
+
+# Dependencies and generated builds
+**/node_modules/
+**/dist/
+**/.turbo/
+coverage/
+*.tsbuildinfo
+
+# Local credentials and environment configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Runtime output
+**/runs/
+**/output/
+**/outputs/
+**/models/
+*.log
+
+# Tool caches
+**/.venv/
+**/__pycache__/
+**/.pytest_cache/
+*.py[cod]
+
+# Editors and operating systems
+.DS_Store
+._*
+.idea/
+.vscode/
+*.swp

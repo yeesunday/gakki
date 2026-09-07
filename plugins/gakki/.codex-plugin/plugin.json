@@ -1,0 +1,28 @@
+{
+  "name": "gakki",
+  "version": "0.4.0-alpha.1",
+  "description": "Implement frontends with Codex using exact design inspection, reusable assets and real render feedback.",
+  "author": {
+    "name": "rain"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "GAKKI",
+    "shortDescription": "Build real pages with precise visual feedback.",
+    "longDescription": "GAKKI connects Codex design understanding with project-native implementation, deterministic assets and actual browser/iOS render evidence. Local tools require no separate model account.",
+    "developerName": "rain",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Design inspection",
+      "Asset preparation",
+      "Browser and iOS render feedback"
+    ],
+    "defaultPrompt": [
+      "用 GAKKI 把这张设计稿实现到当前项目，运行页面并修正关键差异。",
+      "用 GAKKI 找出当前页面的布局问题，直接修复并复验。",
+      "用 GAKKI 整理这些静态素材，保留动态内容并适配项目倍率。"
+    ]
+  },
+  "mcpServers": "./.mcp.json",
+  "license": "MIT"
+}

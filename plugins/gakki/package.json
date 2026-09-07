@@ -1,0 +1,25 @@
+{
+  "name": "gakki-plugin",
+  "version": "0.4.0-alpha.1",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check": "npm run build && npm test",
+    "setup": "node scripts/setup.mjs"
+  },
+  "dependencies": {
+    "playwright-core": "1.62.1",
+    "sharp": "0.35.4"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "esbuild": "0.25.9",
+    "prettier": "3.9.6",
+    "zod": "4.4.3"
+  }
+}

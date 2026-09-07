@@ -1,0 +1,14 @@
+{
+  "name": "gakki-workspace",
+  "private": true,
+  "scripts": {
+    "setup": "npm --prefix plugins/gakki ci --no-audit --no-fund",
+    "build": "npm --prefix plugins/gakki run build",
+    "check": "npm run check:repo && npm --prefix plugins/gakki run check",
+    "dev:update": "node plugins/gakki/scripts/dev-update.mjs",
+    "debug": "node plugins/gakki/src/cli.mjs",
+    "debug:mcp": "node plugins/gakki/scripts/mcp-call.mjs",
+    "pack": "npm run check:repo && npm run build && node plugins/gakki/scripts/pack.mjs",
+    "check:repo": "node scripts/check-repo.mjs"
+  }
+}
