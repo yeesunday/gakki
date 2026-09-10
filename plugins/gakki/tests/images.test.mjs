@@ -97,6 +97,124 @@ test("opaque input cannot masquerade as a required cutout", async (t) => {
   );
   await assert.rejects(fs.access(path.join(f.root, "out")));
 });
+
+test("alpha inspection distinguishes visible artwork, an open center and edge pixels", async (t) => {
+  const f = await fixture(t);
+  const data = Buffer.alloc(60 * 90 * 4);
+  for (const [x, alpha] of [
+    [10, 255],
+    [11, 128],
+  ]) {
+    const offset = (10 * 60 + x) * 4;
+    data.set([240, 210, 140, alpha], offset);
+  }
+  await sharp(data, { raw: { width: 60, height: 90, channels: 4 } })
+    .png()
+    .toFile(f.source);
+  const inspected = await execute("inspect_design", {
+    imagePath: f.source,
+    transparencyPreview: true,
+    regions: [{ id: "opening", rect: [20, 20, 20, 30] }],
+  });
+  assert.equal(inspected.result.source.hasAlpha, true);
+  assert.deepEqual(inspected.result.alpha, {
+    min: 0,
+    max: 255,
+    totalPixels: 5400,
+    transparentPixels: 5398,
+    translucentPixels: 1,
+    opaquePixels: 1,
+    status: "has_transparency",
+  });
+  assert.equal(inspected.result.regions[0].alpha.status, "invisible");
+  assert.deepEqual(inspected.result.contentBoundsAboveAlpha8, [10, 10, 2, 1]);
+  assert.equal(inspected.previews.length, 4);
+  const { data: pair, info } = await sharp(inspected.previews[1].bytes)
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  assert.equal(info.width, 120);
+  assert.deepEqual([...pair.subarray(0, 3)], [245, 245, 245]);
+  assert.deepEqual([...pair.subarray(60 * 3, 60 * 3 + 3)], [32, 32, 32]);
+  // Opaque foreground is unchanged over both backgrounds.
+  assert.deepEqual(
+    [...pair.subarray((10 * 120 + 10) * 3, (10 * 120 + 10) * 3 + 3)],
+    [240, 210, 140],
+  );
+  assert.deepEqual(
+    [...pair.subarray((10 * 120 + 70) * 3, (10 * 120 + 70) * 3 + 3)],
+    [240, 210, 140],
+  );
+});
+
+for (const channels of [3, 4])
+  test(`edited cutout replaced by a ${channels}-channel opaque checkerboard is rejected`, async (t) => {
+    const f = await fixture(t);
+    await execute("prepare_assets", request(f));
+    const data = Buffer.alloc(60 * 90 * channels, 255);
+    for (let y = 0; y < 90; y++)
+      for (let x = 0; x < 60; x++) {
+        const gray = (Math.floor(x / 6) + Math.floor(y / 6)) % 2 ? 180 : 220;
+        const offset = (y * 60 + x) * channels;
+        data.set([gray, gray, gray], offset);
+      }
+    const edited = path.join(f.root, "edited.png");
+    await sharp(data, { raw: { width: 60, height: 90, channels } })
+      .png()
+      .toFile(edited);
+    const inspected = await execute("inspect_design", { imagePath: edited });
+    assert.equal(inspected.result.source.hasAlpha, channels === 4);
+    assert.equal(inspected.result.alpha.status, "opaque");
+    assert.equal(inspected.result.alpha.opaquePixels, 5400);
+    const outputDir = path.join(f.root, "edited-out");
+    await assert.rejects(
+      execute("prepare_assets", {
+        ...request(f, { source: edited }),
+        outputDir,
+      }),
+      /source is opaque/,
+    );
+    await assert.rejects(fs.access(outputDir));
+  });
+
+test("transparent surroundings do not make an opaque crop a cutout", async (t) => {
+  const f = await fixture(t, { r: 0, g: 0, b: 0, alpha: 0 });
+  const bytes = await sharp(f.source)
+    .composite([
+      {
+        input: await sharp({
+          create: { width: 20, height: 30, channels: 4, background: "white" },
+        })
+          .png()
+          .toBuffer(),
+        left: 10,
+        top: 10,
+      },
+    ])
+    .png()
+    .toBuffer();
+  await fs.writeFile(f.source, bytes);
+  await assert.rejects(
+    execute(
+      "prepare_assets",
+      request(f, { rect: [10, 10, 20, 30], scales: [1] }),
+    ),
+    /source is opaque/,
+  );
+  await assert.rejects(fs.access(path.join(f.root, "out")));
+});
+
+test("invisible cutout cannot pass required-alpha packaging", async (t) => {
+  const f = await fixture(t, { r: 0, g: 0, b: 0, alpha: 0 });
+  const inspected = await execute("inspect_design", { imagePath: f.source });
+  assert.equal(inspected.result.alpha.status, "invisible");
+  assert.equal(inspected.result.contentBoundsAboveAlpha8, null);
+  await assert.rejects(
+    execute("prepare_assets", request(f)),
+    /fully transparent/,
+  );
+  await assert.rejects(fs.access(path.join(f.root, "out")));
+});
 test("existing output is not overwritten", async (t) => {
   const f = await fixture(t);
   await fs.mkdir(path.join(f.root, "out"));

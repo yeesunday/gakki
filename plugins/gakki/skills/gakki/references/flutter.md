@@ -8,6 +8,8 @@ Implement native layout constraints, scroll and SafeArea. Keep a required primar
 
 Build/launch using the project's existing Flutter/Xcode tools and explicit debug route. Check whether that route uses real local data or fixtures. Then `capture_ios` captures any listed booted simulators in one call. It records device/runtime identity and selected source hashes, but does not infer which app is visible or drive the UI. Use host computer-use/Xcode tools for system pickers and real interactions.
 
+For a supplied reference, make one state-matched preview available through existing dependency-injection or preview boundaries. Match visible content categories and entitlements (for example populated avatar + paid badge), while keeping reference names/photos out of production data. Capture actual free/empty states separately. A capture of a different state validates that state only; it cannot establish reference fidelity.
+
 ```json
 {
   "projectRoot":"/absolute/project",
@@ -18,6 +20,8 @@ Build/launch using the project's existing Flutter/Xcode tools and explicit debug
 ```
 
 Use actual UUIDs returned by `xcrun simctl list devices`. For a visual-only change, run its relevant Widget/geometry checks and render. Navigation, media ownership, shared state or database changes need the corresponding behavioral regressions. Golden files freeze an accepted state under a fixed renderer/font environment; generating one does not approve the design.
+
+For small screen-space regions such as headers, profile clusters and badges, add stable Widget keys, inspect focused source/render crops, and compare the relationships inside the safe area: anchor, visual bounds, text baseline, type scale, icon-to-label gap, layer order and surrounding negative space. Inspect at least one compact and one large supported screen. Do not make a full-screen simulator thumbnail the only review surface for typography or ornament placement.
 
 For repeatable captures, `capture_ios` accepts optional `context` with `scenario`, `route`, `dataMode` (`local`, `fixture`, or `unknown`) and `buildEvidence`. These are caller declarations, not proof of the visible app or installed binary. The report separately records queried simulator UI settings; unavailable settings stay explicit. Use the project's supported settings and requested scope, not an automatic extreme-text test matrix. Compare empty and populated media states as distinct compositions.
 

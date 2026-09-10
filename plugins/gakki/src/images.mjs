@@ -42,6 +42,7 @@ export async function readImage(input) {
       width: info.width,
       height: info.height,
       format: metadata.format,
+      hasAlpha: metadata.hasAlpha === true,
       originalOrientation: metadata.orientation ?? 1,
       coordinateSpace: "exif-oriented source pixels",
     },
@@ -72,7 +73,66 @@ export async function png(image, rect) {
     pipeline = pipeline.extract(box(rect, image.info.width, image.info.height));
   return pipeline.png().toBuffer();
 }
-export async function inspectDesign({ imagePath, regions = [] }) {
+function alphaSummary(data) {
+  let transparentPixels = 0,
+    opaquePixels = 0,
+    min = 255,
+    max = 0;
+  const totalPixels = data.length / 4;
+  for (let i = 3; i < data.length; i += 4) {
+    const alpha = data[i];
+    if (alpha === 0) transparentPixels++;
+    if (alpha === 255) opaquePixels++;
+    min = Math.min(min, alpha);
+    max = Math.max(max, alpha);
+  }
+  return {
+    min,
+    max,
+    totalPixels,
+    transparentPixels,
+    translucentPixels: totalPixels - transparentPixels - opaquePixels,
+    opaquePixels,
+    status:
+      min === 255 ? "opaque" : max === 0 ? "invisible" : "has_transparency",
+  };
+}
+
+async function transparencyPair(sharp, bytes) {
+  const resized = await sharp(bytes)
+    .resize({
+      width: 700,
+      height: 700,
+      fit: "inside",
+      withoutEnlargement: true,
+    })
+    .png()
+    .toBuffer();
+  const { width, height } = await sharp(resized).metadata();
+  const light = await sharp(resized)
+    .flatten({ background: "#f5f5f5" })
+    .png()
+    .toBuffer();
+  const dark = await sharp(resized)
+    .flatten({ background: "#202020" })
+    .png()
+    .toBuffer();
+  return sharp({
+    create: { width: width * 2, height, channels: 3, background: "white" },
+  })
+    .composite([
+      { input: light, left: 0, top: 0 },
+      { input: dark, left: width, top: 0 },
+    ])
+    .png()
+    .toBuffer();
+}
+
+export async function inspectDesign({
+  imagePath,
+  regions = [],
+  transparencyPreview = false,
+}) {
   const image = await readImage(imagePath);
   const { width, height } = image.info;
   let left = width,
@@ -108,21 +168,35 @@ export async function inspectDesign({ imagePath, regions = [] }) {
       bytes: preview,
     },
   ];
+  if (transparencyPreview)
+    items.push({
+      label:
+        "transparency inspection: light background left, dark background right; visual quality not evaluated",
+      bytes: await transparencyPair(image.sharp, full),
+    });
   const measurements = [];
   for (const region of regions) {
     const cropped = await png(image, region.rect);
     const stats = await image.sharp(cropped).stats();
+    const pixels = await image.sharp(cropped).ensureAlpha().raw().toBuffer();
     measurements.push({
       id: region.id,
       rect: region.rect,
       meanRgba: stats.channels.map((c) => Number(c.mean.toFixed(2))),
+      alpha: alphaSummary(pixels),
     });
     items.push({ label: region.id, bytes: cropped });
+    if (transparencyPreview)
+      items.push({
+        label: `${region.id}: light background left, dark background right`,
+        bytes: await transparencyPair(image.sharp, cropped),
+      });
   }
   return {
     result: {
       source: image.source,
       transparentPixels: transparent,
+      alpha: alphaSummary(image.data),
       contentBoundsAboveAlpha8:
         right < 0 ? null : [left, top, right - left + 1, bottom - top + 1],
       regions: measurements,
@@ -158,13 +232,17 @@ export async function prepareAssets({ assets, outputDir, target = "flutter" }) {
         `${asset.id}: insufficient source pixels for requested density`,
       );
     const buffer = await png(image, rect);
-    if (
-      asset.alpha === "required" &&
-      (await image.sharp(buffer).stats()).channels[3].min === 255
-    )
-      throw new Error(
-        `${asset.id}: source is opaque; preserve background or supply a real cutout. No automatic edge-color erasure.`,
-      );
+    if (asset.alpha === "required") {
+      const channel = (await image.sharp(buffer).stats()).channels[3];
+      if (channel.min === 255)
+        throw new Error(
+          `${asset.id}: source is opaque; preserve background or supply a real cutout. No automatic edge-color erasure.`,
+        );
+      if (channel.max === 0)
+        throw new Error(
+          `${asset.id}: source is fully transparent; supply visible artwork.`,
+        );
+    }
     prepared.push({ asset, image, rect, buffer });
   }
   const output = await newOutput(outputDir);

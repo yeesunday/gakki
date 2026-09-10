@@ -78,8 +78,14 @@ export const operations = {
     true,
   ),
   inspect_design: tool(
-    "Inspect a design image and exact source-pixel crops. Returns visual previews, alpha content bounds and measured region colors; does not infer application data or layouts.",
-    z.object({ imagePath: pathname, regions }).strict(),
+    "Inspect a design image and exact source-pixel crops. Returns alpha distribution, content bounds, measured region colors and optional paired light/dark transparency previews; does not infer layouts or approve cutout quality.",
+    z
+      .object({
+        imagePath: pathname,
+        regions,
+        transparencyPreview: z.boolean().default(false),
+      })
+      .strict(),
     inspectDesign,
     true,
   ),

@@ -59,7 +59,7 @@ For a machine without the installer helpers, build/package locally and use Codex
 | Tool | Result and boundary |
 | --- | --- |
 | `doctor` | Runtime, build and install identity; library presence is not a browser launch test. |
-| `inspect_design` | EXIF-oriented source coordinates, focused image previews, alpha bounds and region colors. Layout remains an inference. |
+| `inspect_design` | EXIF-oriented source coordinates, focused image previews, alpha distribution/bounds and region colors. Optional `transparencyPreview: true` adds paired light/dark composites for the source and crops. Layout and cutout quality remain human/model judgments. |
 | `prepare_assets` | A batch of PNG skins or explicit fixtures in Flutter/Web density paths. Refuses missing resolution, distorted crops and falsely opaque cutouts. |
 | `capture_web` | Local URL, viewport matrix, click/fill/press/wait steps, DOM/style observations, executable geometry/text checks, runtime errors, screenshots and selected source hashes. |
 | `capture_ios` | Current screens of specified booted simulators, runtime identity and selected source hashes. Build, launch, locale and navigation are the host's responsibility. |
@@ -67,6 +67,12 @@ For a machine without the installer helpers, build/package locally and use Codex
 | `verify_capture` | Detects changed/deleted selected source files. Empty selections are `untracked`; this is not a dependency graph or test rerun. |
 
 MCP image inspection returns visual image blocks; capture replies return up to two resized previews alongside measurements. Full originals remain in the run. CLI and MCP share the same validation and operations. CLI exit codes: `0` completed, `1` failed executed checks/stale sources, `2` invalid input/runtime error. A zero exit code does not mean visual approval.
+
+Reference-led work uses a state-matched visual contract before implementation: focused reference crops, explicit hierarchy/proportion/type relationships, fixture-only sample content where needed, and focused reference/render review after material changes. A full-page capture, successful build or different runtime state cannot stand in for that comparison. Later user corrections update the affected contract properties while unchanged reference relationships stay anchored.
+
+For a generated or edited cutout, call `inspect_design` with `transparencyPreview: true` on each candidate. `source.hasAlpha` records the input channel; `alpha` reports transparent, translucent and opaque pixel counts plus `opaque`, `invisible` or `has_transparency` status. Each requested region includes the same measurements. This detects fully opaque output even when it has an Alpha channel; it does not automatically classify checkerboard texture or certify clean edges. `prepare_assets` with `alpha: required` rejects opaque crops and fully invisible artwork before writing output.
+
+If image tools are not exposed in the current host session, use `node dist/cli.mjs inspect_design /absolute/input.json` for measurements. To save the paired image previews as well, run `node scripts/mcp-call.mjs inspect_design /absolute/input.json /absolute/installed/dist/mcp.mjs /absolute/new-preview-directory` from a source checkout with development dependencies, then open the returned PNGs.
 
 The executable input schemas are in `src/operations.mjs`. Working Web examples are in [the Web reference](skills/gakki/references/web.md); native guidance is in [the Flutter reference](skills/gakki/references/flutter.md). All filesystem paths passed to tools are absolute, except selected `files`, which are relative to `projectRoot`.
 

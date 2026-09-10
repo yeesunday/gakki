@@ -74,12 +74,17 @@ test(
       name: "inspect_design",
       arguments: {
         imagePath,
+        transparencyPreview: true,
         regions: [{ id: "detail", rect: [0, 0, 10, 10] }],
       },
     });
     assert.equal(inspected.isError, undefined);
-    assert.equal(inspected.content.filter((c) => c.type === "image").length, 2);
+    assert.equal(inspected.content.filter((c) => c.type === "image").length, 4);
     assert.equal(JSON.parse(inspected.content[0].text).source.width, 30);
+    assert.equal(
+      JSON.parse(inspected.content[0].text).alpha.status,
+      "has_transparency",
+    );
     const failed = await client.callTool({
       name: "inspect_design",
       arguments: { imagePath: "/nonexistent/gakki.png" },
